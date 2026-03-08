@@ -1,4 +1,5 @@
 -- Basic settings
+vim.env.JAVA_HOME = '/usr/lib/jvm/java-21-amazon-corretto'
 vim.g.mapleader = ' '
 vim.opt.number = true
 vim.opt.relativenumber = true
@@ -52,9 +53,6 @@ require('lazy').setup({
           end
         end
       })
-      
-      -- Use system clipboard as default
-      vim.opt.clipboard = 'unnamedplus'
     end,
   },
 
@@ -245,7 +243,7 @@ require('lazy').setup({
           yaml = { 'prettier' },
         },
         format_on_save = {
-          timeout_ms = 500,
+          timeout_ms = 1000,
           lsp_fallback = true,
         },
       })
@@ -357,6 +355,19 @@ vim.keymap.set('n', '<leader>gg', function()
   end
 end, { desc = 'LazyGit' })
 
+-- Show diagnostic sign only, float on cursor hold
+vim.diagnostic.config({ virtual_text = false })
+vim.opt.updatetime = 500
+vim.api.nvim_create_autocmd('CursorHold', {
+  callback = function()
+    vim.diagnostic.open_float(nil, { focusable = false, scope = 'cursor' })
+  end,
+})
+vim.keymap.set('n', '<leader>d', vim.diagnostic.open_float, { desc = 'Show diagnostic' })
+
 -- Buffer navigation with Shift+H and Shift+L
 vim.keymap.set('n', '<S-h>', '<cmd>bprevious<cr>', { desc = 'Previous buffer' })
 vim.keymap.set('n', '<S-l>', '<cmd>bnext<cr>', { desc = 'Next buffer' })
+
+-- Print current file's directory
+vim.keymap.set('n', '<leader>p', ':echo expand("%:p:h")<CR>', { desc = 'Print file directory' })
