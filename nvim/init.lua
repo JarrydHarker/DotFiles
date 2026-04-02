@@ -3,7 +3,7 @@ vim.env.JAVA_HOME = '/usr/lib/jvm/java-21-amazon-corretto'
 vim.g.mapleader = ' '
 vim.opt.number = true
 vim.opt.relativenumber = true
-vim.opt.mouse = 'a'
+vim.opt.mouse = ''
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.tabstop = 2
@@ -11,6 +11,27 @@ vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.wrap = false
 vim.opt.termguicolors = true
+vim.opt.clipboard = 'unnamedplus'
+vim.g.clipboard = {
+  name = 'OSC 52',
+  copy = {
+    ['+'] = function(lines)
+      local s = vim.base64.encode(table.concat(lines, '\n'))
+      local esc = vim.env.TMUX
+        and ('\027Ptmux;\027\027]52;c;%s\a\027\\'):format(s)
+        or ('\027]52;c;%s\027\\'):format(s)
+      vim.api.nvim_chan_send(2, esc)
+    end,
+    ['*'] = function(lines)
+      local s = vim.base64.encode(table.concat(lines, '\n'))
+      local esc = vim.env.TMUX
+        and ('\027Ptmux;\027\027]52;c;%s\a\027\\'):format(s)
+        or ('\027]52;c;%s\027\\'):format(s)
+      vim.api.nvim_chan_send(2, esc)
+    end,
+  },
+  paste = { ['+'] = function() return 0 end, ['*'] = function() return 0 end },
+}
 
 -- Install lazy.nvim
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
@@ -35,26 +56,9 @@ require('lazy').setup({
     end,
   },
 
-  -- OSC52 clipboard (modern remote clipboard)
-  {
-    'ojroques/nvim-osc52',
-    config = function()
-      local osc52 = require('osc52')
-      osc52.setup({ 
-        silent = true,
-        tmux_passthrough = true,
-      })
-      
-      -- Auto-copy yanked text to system clipboard via OSC52
-      vim.api.nvim_create_autocmd('TextYankPost', {
-        callback = function()
-          if vim.v.event.operator == 'y' then
-            pcall(osc52.copy_register, '"')
-          end
-        end
-      })
-    end,
-  },
+  -- OSC52 clipboard (nvim 0.11+ built-in)
+  -- No plugin needed; just set the clipboard provider
+
 
   -- fzf-lua for fast fuzzy finding
   {
@@ -229,26 +233,7 @@ require('lazy').setup({
     end,
   },
 
-  -- Conform for auto-formatting
-  {
-    'stevearc/conform.nvim',
-    config = function()
-      require('conform').setup({
-        formatters_by_ft = {
-          lua = { 'stylua' },
-          python = { 'black' },
-          javascript = { 'prettier' },
-          typescript = { 'prettier' },
-          json = { 'prettier' },
-          yaml = { 'prettier' },
-        },
-        format_on_save = {
-          timeout_ms = 1000,
-          lsp_fallback = true,
-        },
-      })
-    end,
-  },
+
 
   -- Better text objects
   {
@@ -344,17 +329,6 @@ require('lazy').setup({
   },
 })
 
--- Lazygit keybinding
-vim.keymap.set('n', '<leader>gg', function()
-  local git_root = vim.fn.systemlist('git -C ' .. vim.fn.expand('%:p:h') .. ' rev-parse --show-toplevel')[1]
-  if git_root and git_root ~= '' then
-    vim.cmd('terminal cd ' .. git_root .. ' && lazygit')
-    vim.cmd("startinsert")
-  else
-    vim.cmd('terminal lazygit')
-  end
-end, { desc = 'LazyGit' })
-
 -- Show diagnostic sign only, float on cursor hold
 vim.diagnostic.config({ virtual_text = false })
 vim.opt.updatetime = 500
@@ -363,11 +337,5 @@ vim.api.nvim_create_autocmd('CursorHold', {
     vim.diagnostic.open_float(nil, { focusable = false, scope = 'cursor' })
   end,
 })
-vim.keymap.set('n', '<leader>d', vim.diagnostic.open_float, { desc = 'Show diagnostic' })
 
--- Buffer navigation with Shift+H and Shift+L
-vim.keymap.set('n', '<S-h>', '<cmd>bprevious<cr>', { desc = 'Previous buffer' })
-vim.keymap.set('n', '<S-l>', '<cmd>bnext<cr>', { desc = 'Next buffer' })
-
--- Print current file's directory
-vim.keymap.set('n', '<leader>p', ':echo expand("%:p:h")<CR>', { desc = 'Print file directory' })
+require('config.keymaps')
