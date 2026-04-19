@@ -1,0 +1,36 @@
+# --- General Binaries & Junk ---
+*.sqlite*
+*.db
+*.bin
+*.exe
+*.so
+*.o
+*.pyc
+node_modules/
+__pycache__/
+.cache/
+.tmp/
+.git/
+
+# --- Neovim / Vim Junk ---
+*.swp
+*.swo
+undo/
+backups/
+
+# --- Browser / Electron Junk ---
+webengine/
+local_storage/
+sessions/
+cookies/
+history
+state
+greasemonkey/
+scripts/
+
+# --- Sensitive/Personal ---
+bookmarks
+quickmarks
+.env
+*.pem
+*token*
